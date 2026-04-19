@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Top Section: SOS and Map -->
+    <div class="dashboard-top-grid">
+        <!-- SOS Trigger Section -->
+        <div class="sos-section glass-panel">
+            <div class="sos-content">
+                <h2>Emergency Trigger</h2>
+                <p>Press the button below in case of an emergency. We will instantly notify your trusted contacts with your live location.</p>
+                
+                <button id="sosBtn" class="sos-button">
+                    <div class="pulse-ring"></div>
+                    <span class="sos-text">SOS</span>
+                </button>
+                
+                <div id="sosStatus" class="status-message hidden"></div>
+            </div>
+        </div>
+
+        <!-- Location Map Section -->
+        <div class="map-section glass-panel">
+            <h2>Your Current Location</h2>
+            <div id="map" class="map-container">
+                <div class="map-loading">Waiting for location permission...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Section: Contacts and History -->
+    <div class="dashboard-bottom-grid">
+        <!-- Trusted Contacts Section -->
+        <div class="contacts-section glass-panel">
+            <div class="section-header">
+                <h2>Trusted Contacts</h2>
+                <button class="btn btn-outline btn-sm" onclick="document.getElementById('addContactModal').style.display='flex'">+ Add New</button>
+            </div>
+            
+            {% if contacts %}
+                <ul class="contacts-list">
+                    {% for contact in contacts %}
+                    <li class="contact-card">
+                        <div class="contact-info">
+                            <div class="contact-avatar">{{ contact.name[0] | upper }}</div>
+                            <div class="contact-details">
+                                <h3>{{ contact.name }}</h3>
+                                <p>📱 {{ contact.phone_number }}</p>
+                                {% if contact.email %}<p>✉️ {{ contact.email }}</p>{% endif %}
+                            </div>
+                        </div>
+                        <form method="POST" action="{{ url_for('delete_contact', contact_id=contact.id) }}" onsubmit="return confirm('Remove this contact?');">
+                            <button type="submit" class="btn-icon text-danger" title="Remove Contact">🗑️</button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">👥</div>
+                    <p>You haven't added any trusted contacts yet.</p>
+                    <p class="text-sm">Add contacts to ensure someone is notified during an emergency.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Alert History Section -->
+        <div class="history-section glass-panel">
+            <h2>Recent Alerts</h2>
+            
+            {% if recent_alerts %}
+                <ul class="history-list">
+                    {% for alert in recent_alerts %}
+                    <li class="history-card">
+                        <div class="history-icon">🚨</div>
+                        <div class="history-details">
+                            <p class="history-time">{{ alert.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                            <p class="history-status status-{{ alert.status|lower }}">{{ alert.status }}</p>
+                            {% if alert.latitude and alert.longitude %}
+                                <a href="https://www.google.com/maps?q={{ alert.latitude }},{{ alert.longitude }}" target="_blank" class="history-location-link">View Location</a>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">✅</div>
+                    <p>No recent alerts.</p>
+                    <p class="text-sm">You are safe!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Contact Modal -->
+<div id="addContactModal" class="modal">
+    <div class="modal-content glass-panel">
+        <div class="modal-header">
+            <h2>Add Trusted Contact</h2>
+            <span class="close-modal" onclick="document.getElementById('addContactModal').style.display='none'">&times;</span>
+        </div>
+        <form method="POST" action="{{ url_for('add_contact') }}">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name" required placeholder="e.g., Jane Doe">
+            </div>
+            <div class="form-group">
+                <label for="phone_number">Phone Number</label>
+                <input type="tel" id="phone_number" name="phone_number" required placeholder="e.g., +1234567890">
+            </div>
+            <div class="form-group">
+                <label for="email">Email Address (Optional)</label>
+                <input type="email" id="email" name="email" placeholder="e.g., jane@example.com">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Add Contact</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

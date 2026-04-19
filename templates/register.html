@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<div class="auth-container reverse-layout">
+    <div class="auth-card glass-panel">
+        <div class="auth-header">
+            <h2>Create an Account</h2>
+            <p>Join SafeNet to protect yourself and your loved ones.</p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('register') }}" class="auth-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">👤</span>
+                    <input type="text" id="username" name="username" required placeholder="Choose a username">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">✉️</span>
+                    <input type="email" id="email" name="email" required placeholder="Enter your email">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="phone_number">Phone Number</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">📱</span>
+                    <input type="tel" id="phone_number" name="phone_number" required placeholder="Your mobile number">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" id="password" name="password" required placeholder="Create a password">
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
+        </form>
+        
+        <div class="auth-footer">
+            <p>Already have an account? <a href="{{ url_for('login') }}">Sign In</a></p>
+        </div>
+    </div>
+    
+    <div class="auth-illustration">
+        <div class="hero-text">
+            <h1>Stay Safe, Stay Connected</h1>
+            <p>One tap to alert your trusted contacts. Real-time GPS tracking for peace of mind.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

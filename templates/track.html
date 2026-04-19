@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Tracking - SafeNet</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body { margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .track-header { background: var(--dark-alt); padding: 1rem 2rem; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; z-index: 1000; position: relative; }
+        .track-title { font-family: var(--font-heading); font-size: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; }
+        .track-status { padding: 0.4rem 1rem; border-radius: 20px; font-weight: bold; font-size: 0.9rem; }
+        .status-active { background: rgba(255, 71, 87, 0.2); color: var(--primary); border: 1px solid var(--primary); animation: pulse-border 2s infinite; }
+        .status-resolved { background: rgba(46, 213, 115, 0.2); color: var(--secondary); border: 1px solid var(--secondary); }
+        #track-map { flex: 1; width: 100%; z-index: 1; }
+        @keyframes pulse-border { 0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); } }
+    </style>
+</head>
+<body>
+    <div class="track-header">
+        <div class="track-title">
+            <span class="shield-icon">🚨</span> 
+            <span>Emergency Tracking: {{ alert.user.username }}</span>
+        </div>
+        <div id="statusBadge" class="track-status status-active">LIVE TRACKING</div>
+    </div>
+    
+    <div id="track-map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const alertId = {{ alert.id }};
+            const map = L.map('track-map').setView([0, 0], 2);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            let marker = null;
+            let pathLine = null;
+
+            function updateMap() {
+                fetch(`/api/track/${alertId}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const coords = data.coordinates;
+                        if (coords.length > 0) {
+                            const latest = coords[coords.length - 1];
+                            const latLng = [latest.lat, latest.lng];
+                            
+                            // Initialize or update marker
+                            if (!marker) {
+                                marker = L.marker(latLng).addTo(map).bindPopup('<b>{{ alert.user.username }}</b> is here.').openPopup();
+                                map.setView(latLng, 16);
+                            } else {
+                                marker.setLatLng(latLng);
+                            }
+                            
+                            // Draw path
+                            const pathLatLngs = coords.map(c => [c.lat, c.lng]);
+                            if (!pathLine) {
+                                pathLine = L.polyline(pathLatLngs, {color: '#ff4757', weight: 4}).addTo(map);
+                            } else {
+                                pathLine.setLatLngs(pathLatLngs);
+                            }
+                            
+                            // Adjust view to fit path if there are multiple points
+                            if (coords.length > 1 && !map.isDragging) {
+                                map.fitBounds(pathLine.getBounds(), {padding: [50, 50], maxZoom: 16});
+                            }
+                        }
+                    })
+                    .catch(err => console.error('Error fetching track data:', err));
+            }
+
+            // Initial load
+            updateMap();
+            
+            // Poll every 5 seconds
+            setInterval(updateMap, 5000);
+        });
+    </script>
+</body>
+</html>
